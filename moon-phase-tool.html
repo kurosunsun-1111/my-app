@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>月相 × 太陽星座 × 月星座 解析ツール</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6EAF0; --paper:#F3F5F8; --ink:#1C2541; --sub:#4A5573; --line:#C5CCD8;
+  --silver:#8E9AB0; --gold:#A8833A; --plum:#5B4B6E; --moonlit:#F1E6C8; --moondark:#2A3352;
+  --serif:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --sans:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121829; --paper:#1A2238; --ink:#E4E8F1; --sub:#A7B0C6; --line:#2E3854;
+    --silver:#7F8AA3; --gold:#D4B26A; --plum:#B9A5D6; --moonlit:#F1E6C8; --moondark:#0C1120;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121829; --paper:#1A2238; --ink:#E4E8F1; --sub:#A7B0C6; --line:#2E3854;
+  --silver:#7F8AA3; --gold:#D4B26A; --plum:#B9A5D6; --moonlit:#F1E6C8; --moondark:#0C1120;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.85;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px 80px}
+h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.4;margin:0}
+h1{font-size:clamp(1.7rem,4.4vw,2.6rem);letter-spacing:.04em}
+h2{font-size:1.45rem;margin-bottom:.6em}
+h3{font-size:1.1rem}
+p{margin:.4em 0}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:32px;align-items:center;padding:48px 0 28px}
+.hero .lead{color:var(--sub);max-width:34em;margin-top:.8em}
+#moonArt{width:100%;max-width:260px;aspect-ratio:1;justify-self:center}
+form{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:20px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px 18px;align-items:end}
+label{display:block;font-size:.85rem;color:var(--sub);margin-bottom:4px}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px 10px;min-height:42px}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button{font:inherit;font-weight:700;background:var(--ink);color:var(--paper);border:0;border-radius:4px;padding:10px 18px;min-height:42px;cursor:pointer}
+.hint{font-size:.8rem;color:var(--sub);grid-column:1/-1;margin:0}
+section{margin-top:44px}
+.result{display:none}
+.result.show{display:block}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.trio>div{padding:18px 16px;border-right:1px solid var(--line)}
+.trio>div:last-child{border-right:0}
+.trio .k{font-size:.82rem;color:var(--sub)}
+.trio .v{font-family:var(--serif);font-size:1.5rem;font-weight:800;line-height:1.35;margin:4px 0}
+.trio .d{font-size:.85rem;color:var(--sub)}
+.essence{font-family:var(--serif);font-size:clamp(1.15rem,2.6vw,1.45rem);line-height:1.8;margin:28px 0 8px;padding-left:18px;border-left:3px solid var(--gold)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 32px;margin-top:20px}
+.grid2 h3{margin-bottom:4px;color:var(--plum)}
+.note{font-size:.85rem;color:var(--sub);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-top:14px}
+.warn{border-color:var(--gold)}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-top:2px solid var(--ink)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:.88rem;line-height:1.7}
+th,td{text-align:left;vertical-align:top;padding:12px 10px;border-bottom:1px solid var(--line)}
+th{font-weight:700;color:var(--sub);font-size:.8rem;white-space:nowrap}
+td.ph{font-family:var(--serif);font-weight:700;white-space:nowrap;font-size:1rem}
+td.ph small{display:block;font-family:var(--sans);font-weight:400;color:var(--sub);font-size:.75rem}
+tr.me td{background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.cycle{display:flex;flex-wrap:wrap;gap:0;margin-top:16px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.cycle div{flex:1 1 220px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:.9rem}
+.cycle b{font-family:var(--serif)}
+.partner{margin-top:16px}
+details summary{cursor:pointer;font-weight:700}
+.foot{font-size:.8rem;color:var(--sub);margin-top:56px;border-top:1px solid var(--line);padding-top:16px}
+@media (max-width:720px){
+  .hero{grid-template-columns:1fr;padding-top:28px}
+  #moonArt{max-width:180px;grid-row:1}
+  .trio{grid-template-columns:1fr}
+  .trio>div{border-right:0;border-bottom:1px solid var(--line)}
+  .grid2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){
+  #litPath{transition:d .6s ease}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div>
+    <h1>生まれた夜の月を、読む</h1>
+    <p class="lead">生年月日から太陽と月の位置を天文計算し、8つの月相・太陽星座・月星座を出して、三つを重ねた読み解きを表示します。</p>
+  </div>
+  <svg id="moonArt" viewBox="0 0 200 200" role="img" aria-label="生まれた日の月の形">
+    <circle cx="100" cy="100" r="80" fill="var(--moondark)"/>
+    <path id="litPath" d="M100 20 A80 80 0 0 1 100 180 A80 80 0 0 1 100 20" fill="var(--moonlit)"/>
+    <circle cx="100" cy="100" r="80" fill="none" stroke="var(--silver)" stroke-width="1"/>
+  </svg>
+</header>
+
+<form id="f">
+  <div><label for="d">生年月日</label><input type="date" id="d" required value="1983-03-07"></div>
+  <div><label for="t">出生時刻（わかれば）</label><input type="time" id="t" value="20:23"></div>
+  <div><label for="tz">出生地の時差</label>
+    <select id="tz">
+      <option value="9" selected>日本（UTC+9）</option><option value="8">中国・台湾・シンガポール（UTC+8）</option>
+      <option value="7">タイ・ベトナム（UTC+7）</option><option value="5.5">インド（UTC+5:30）</option>
+      <option value="1">中欧（UTC+1）</option><option value="0">英国（UTC+0）</option>
+      <option value="-5">米国東部（UTC−5）</option><option value="-8">米国西部（UTC−8）</option>
+    </select></div>
+  <div><button type="submit">解析する</button></div>
+  <p class="hint">時刻が空欄の場合は、その日の0:00と23:59の両方で計算し、月星座や月相が日中に切り替わるときはお知らせします。夏時間の期間は時差を1時間進めて選んでください。</p>
+</form>
+
+<section id="res" class="result" aria-live="polite">
+  <h2 id="resTitle"></h2>
+  <div class="trio">
+    <div><div class="k">月相（人生で担いやすい役割）</div><div class="v" id="vPhase"></div><div class="d" id="dPhase"></div></div>
+    <div><div class="k">太陽星座（力を向ける方向）</div><div class="v" id="vSun"></div><div class="d" id="dSun"></div></div>
+    <div><div class="k">月星座（心が満たされる条件）</div><div class="v" id="vMoon"></div><div class="d" id="dMoon"></div></div>
+  </div>
+  <div id="notes"></div>
+  <p class="essence" id="essence"></p>
+  <div class="grid2" id="detail"></div>
+
+  <div class="partner">
+    <details>
+      <summary>相手の生年月日で月相の相性を見る</summary>
+      <form id="pf" style="margin-top:12px">
+        <div><label for="pd">相手の生年月日</label><input type="date" id="pd"></div>
+        <div><label for="pt">時刻（任意）</label><input type="time" id="pt"></div>
+        <div><button type="submit">相性を見る</button></div>
+      </form>
+      <div id="pres"></div>
+    </details>
+  </div>
+</section>
+
+<section>
+  <h2>8つの月相 × 仕事・才能・恋愛・相性</h2>
+  <p style="color:var(--sub);font-size:.9rem">太陽と月の角度（離角）を45°ずつ8つに分ける、占星術の月相分類（D. ルディア式）です。あなたの月相の行に色がつきます。</p>
+  <div class="scroll"><table id="tbl"></table></div>
+  <h3 style="margin-top:28px">8つを「才能の流れ」として読む</h3>
+  <div class="cycle" id="cycle"></div>
+</section>
+
+<p class="foot">天文計算はJ. Meeusの簡略式によるもので、精度は太陽・月とも約0.3°以内です。星座の境界付近（±0.5°）では注意を表示します。解釈は月相占星術の象徴的な読み方の一例で、流派によって幅があります。</p>
+</div>
+
+<script>
+const D=Math.PI/180, n360=x=>((x%360)+360)%360;
+function jd(y,m,d,h){if(m<=2){y--;m+=12}const A=Math.floor(y/100),B=2-A+Math.floor(A/4);return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(m+1))+d+h/24+B-1524.5}
+function sunLon(T){const L0=280.46646+36000.76983*T+.0003032*T*T,M=357.52911+35999.05029*T-.0001537*T*T;
+ const C=(1.914602-.004817*T-.000014*T*T)*Math.sin(M*D)+(.019993-.000101*T)*Math.sin(2*M*D)+.000289*Math.sin(3*M*D);
+ return n360(L0+C-.00569-.00478*Math.sin((125.04-1934.136*T)*D))}
+const MT=[[0,0,1,0,6288774],[2,0,-1,0,1274027],[2,0,0,0,658314],[0,0,2,0,213618],[0,1,0,0,-185116],[0,0,0,2,-114332],[2,0,-2,0,58793],[2,-1,-1,0,57066],[2,0,1,0,53322],[2,-1,0,0,45758],[0,1,-1,0,-40923],[1,0,0,0,-34720],[0,1,1,0,-30383],[2,0,0,-2,15327],[0,0,1,2,-12528],[0,0,1,-2,10980],[4,0,-1,0,10675],[0,0,3,0,10034],[4,0,-2,0,8548],[2,1,-1,0,-7888],[2,1,0,0,-6766],[1,0,-1,0,-5163],[1,1,0,0,4987],[2,-1,1,0,4036],[2,0,2,0,3994],[4,0,0,0,3861],[2,0,-3,0,3665],[0,1,-2,0,-2689],[2,0,-1,2,-2602],[2,-1,-2,0,2390],[1,0,1,0,-2348],[2,-2,0,0,2236],[0,1,2,0,-2120],[0,2,0,0,-2069],[2,-2,-1,0,2048],[2,0,1,-2,-1773],[2,0,0,2,-1595],[4,-1,-1,0,1215],[0,0,2,2,-1110],[3,0,-1,0,-892],[2,1,1,0,-810],[4,-1,-2,0,759],[0,2,-1,0,-713],[2,2,-1,0,-700],[2,1,-2,0,691],[2,-1,0,-2,596],[4,0,1,0,549],[0,0,4,0,537],[4,-1,0,0,520],[1,0,-2,0,-487],[2,1,0,-2,-399],[0,0,2,-2,-381],[1,1,1,0,351],[3,0,-2,0,-340],[4,0,-3,0,330],[2,-1,2,0,327],[0,2,1,0,-323],[1,1,-1,0,299],[2,0,3,0,294]];
+function moonLon(T){const Lp=218.3164477+481267.88123421*T-.0015786*T*T,Dm=297.8501921+445267.1114034*T-.0018819*T*T,
+ M=357.5291092+35999.0502909*T,Mp=134.9633964+477198.8675055*T+.0087414*T*T,F=93.272095+483202.0175233*T-.0036539*T*T,E=1-.002516*T-.0000074*T*T;
+ let s=0;for(const[a,b,c,d,v]of MT){const e=Math.abs(b)===1?E:Math.abs(b)===2?E*E:1;s+=v*e*Math.sin((a*Dm+b*M+c*Mp+d*F)*D)}
+ s+=3958*Math.sin((119.75+131.849*T)*D)+1962*Math.sin((Lp-F)*D)+318*Math.sin((53.09+479264.29*T)*D);
+ return n360(Lp+s/1e6-.00478*Math.sin((125.04452-1934.136261*T)*D))}
+function calc(y,m,d,h,tz){const T=(jd(y,m,d,h-tz)-2451545)/36525,s=sunLon(T),mo=moonLon(T),el=n360(mo-s);
+ return{s,mo,el,ill:(1-Math.cos(el*D))/2,age:el/360*29.530589}}
+
+const SIGNS=[
+ {n:"牡羊座",e:"火",dir:"まだ誰も手をつけていない場所に一番乗りする",need:"自分の意思で動き出せる"},
+ {n:"牡牛座",e:"地",dir:"五感と時間をかけて、確かな価値を育てる",need:"心地よさと安定が保たれている"},
+ {n:"双子座",e:"風",dir:"情報と言葉を軽やかに行き来させる",need:"知的な刺激と会話がある"},
+ {n:"蟹座",e:"水",dir:"人や居場所を守り、育む",need:"安心できる身内やホームがある"},
+ {n:"獅子座",e:"火",dir:"自分らしさを表現し、人を照らす",need:"自分の創造が認められ、喜ばれる"},
+ {n:"乙女座",e:"地",dir:"細部を整え、実際に役立つ形にする",need:"役に立てている実感がある"},
+ {n:"天秤座",e:"風",dir:"人と人、美と調和の関係をデザインする",need:"対等で美しい関係の中にいる"},
+ {n:"蠍座",e:"水",dir:"一つのテーマを深く掘り、変容させる",need:"深く信頼できるつながりがある"},
+ {n:"射手座",e:"火",dir:"遠くの世界や思想に手を伸ばし、意味を広げる",need:"真理や意味を探究する自由がある"},
+ {n:"山羊座",e:"地",dir:"長期的な構造を築き、社会で結果を出す",need:"目標に向かって着実に積み上げている"},
+ {n:"水瓶座",e:"風",dir:"新しい仕組みや未来のビジョンを実装する",need:"自分らしい独立性と仲間がある"},
+ {n:"魚座",e:"水",dir:"境界を越えてつなぎ、目に見えないものを感じ取る",need:"共感やインスピレーションに満たされている"}];
+
+const PH=[
+ {i:"🌑",n:"新月",en:"New Moon",theme:"始まり・種をまく",role:"直感で新しい種をまく",work:"起業、企画、新規事業、研究、先行開発、独立",tal:"直感、先見性、ゼロから始める力、自分の感覚を信じる力",love:"直感的に惹かれる。恋も「始まり」の勢いが強い",cmp:[2,1,4],shadow:"勢いで始めて、周囲への説明が後回しになりやすい",step:"始めた種を、言葉にして誰かと共有する",voice:"これ、やってみたい"},
+ {i:"🌒",n:"三日月",en:"Crescent",theme:"可能性・芽生え",role:"芽生えた可能性を、古い流れに負けずに育てる",work:"新分野の開拓、創作、スタートアップ、マーケティング、探索型の仕事",tal:"好奇心、柔軟性、未知への適応力、可能性を見つける力",love:"「この人面白い！」という好奇心から恋が始まりやすい",cmp:[0,2,6],shadow:"周囲の反応を気にして、芽を引っこめてしまいやすい",step:"小さく試して、手応えを積み上げる",voice:"こんな可能性があるかも"},
+ {i:"🌓",n:"上弦の月",en:"First Quarter",theme:"創造・突破・実行",role:"アイデアを現実の形にして前へ進める",work:"企画実行、プロジェクト推進、営業、起業、リーダー、プロデュース",tal:"生み出して現実にする力、突破力、決断力",love:"好きになると行動が早い。関係を前に進めるタイプ",cmp:[6,0,4],shadow:"作ることに夢中で、そもそもの設計を疑わない",step:"走りながら、時々立ち止まって目的を確かめる",voice:"よし、形にしよう"},
+ {i:"🌔",n:"十三夜",en:"Gibbous",theme:"成長・洗練・完成へ",role:"形になったものを磨き、完成度を高める",work:"編集、設計、品質管理、専門職、改善、コンサル、ディレクション",tal:"改善力、分析力、完成度を高める力、粘り強さ",love:"相手をじっくり見極める。理想が高め",cmp:[4,2,5],shadow:"完璧を求めて、なかなか世に出せない",step:"8割の完成度で一度出し、反応から磨く",voice:"もっと良くしよう"},
+ {i:"🌕",n:"満月",en:"Full Moon",theme:"完成・表現・輝き",role:"成果を形にして、人前で輝かせる",work:"広報、講師、芸術、接客、営業、発信、エンタメ、リーダー",tal:"存在感、表現力、人を惹きつける力、成果を形にする力",love:"感情が豊か。愛情表現が比較的ストレート",cmp:[0,3,5],shadow:"人の評価や関係に気持ちが大きく揺れやすい",step:"自分と他者の両方を客観視する時間を持つ",voice:"完成した。世の中に出そう"},
+ {i:"🌖",n:"種まきの月",en:"Disseminating",theme:"共有・伝達・普及",role:"得た知恵を整理し、多くの人へ広める",work:"教育、執筆、SNS、広報、出版、コンサル、コミュニティ運営",tal:"知識を整理して人に渡す力、教える力、橋渡し力",love:"「一緒に成長したい」という感覚を大切にする",cmp:[4,7,3],shadow:"「正しさ」を伝えたい気持ちが強くなりすぎる",step:"教えながら、相手から学ぶ姿勢を保つ",voice:"みんなにも伝えよう"},
+ {i:"🌗",n:"下弦の月",en:"Last Quarter",theme:"再構築・革新・使命",role:"既存の枠組みを疑い、新しい原理で組み直す",work:"研究、改革、AI・IT、新規理論、戦略、コンサル、問題解決",tal:"常識を疑う力、独創性、別角度から見る力、改革力",love:"一般的な恋愛観に縛られにくい。精神的なつながりを重視",cmp:[2,7,1],shadow:"発想が先へ行きすぎて、実装や説明が追いつかない",step:"考えたことを、実行力のある人と組んで形にする",voice:"そもそもの仕組みを変えたほうがいいのでは？"},
+ {i:"🌘",n:"鎮静の月",en:"Balsamic",theme:"統合・手放し・叡智",role:"経験を知恵に統合し、次のサイクルへ手渡す",work:"カウンセリング、ヒーリング、心理、研究、芸術、スピリチュアル、支援職",tal:"直感、洞察、共感、深い理解、経験を知恵に変える力",love:"表面的な関係より魂レベルのつながりを求めやすい",cmp:[5,6,0],shadow:"理解を深めることに没頭し、外へ出すのが遅れる",step:"未完成でも、今の理解を仮説として手渡す",voice:"本質は何だったのか。次へつなげよう"}];
+
+const ELEM={火:"情熱",地:"現実",風:"知性",水:"感情"};
+function elemRel(a,b){if(a===b)return"同じ"+a+"のエレメント同士で、望むことと行動の方向がそろいやすく、一貫した印象を与えます。";
+ const pair=[a,b].sort().join("");
+ if(pair==="火風"||pair==="地水")return a+"と"+b+"は支え合う組み合わせ。"+ELEM[a]+"と"+ELEM[b]+"が自然に補い合います。";
+ return a+"（"+ELEM[a]+"）と"+b+"（"+ELEM[b]+"）は性質が異なる組み合わせ。内側で葛藤も生まれやすい一方、その摩擦が幅の広さや独自性の源になります。"}
+
+const appear=el=>el<1.5||el>358.5?"新月":el<88.5?"三日月（満ちていく）":el<91.5?"上弦":el<178.5?"十三夜〜満ちる月":el<181.5?"満月":el<268.5?"欠けていく凸月":el<271.5?"下弦":"欠けていく三日月";
+const phaseIdx=el=>Math.floor(el/45)%8;
+const signOf=l=>Math.floor(l/30);
+const deg=l=>(l%30).toFixed(1)+"°";
+
+function drawMoon(el){
+ const r=80,cx=100,cy=100,rx=Math.abs(r*Math.cos(el*D)).toFixed(2);
+ let d;
+ if(el<=180){const sw=el<90?0:1;d=`M${cx} ${cy-r} A${r} ${r} 0 0 1 ${cx} ${cy+r} A${rx} ${r} 0 0 ${sw} ${cx} ${cy-r}`}
+ else{const sw=el>270?1:0;d=`M${cx} ${cy-r} A${r} ${r} 0 0 0 ${cx} ${cy+r} A${rx} ${r} 0 0 ${sw} ${cx} ${cy-r}`}
+ document.getElementById("litPath").setAttribute("d",d);
+ document.getElementById("moonArt").setAttribute("aria-label","月の形："+appear(el));
+}
+const $=id=>document.getElementById(id);
+function parse(dv,tv,tz){const[y,m,d]=dv.split("-").map(Number);
+ if(tv){const[h,mi]=tv.split(":").map(Number);const r=calc(y,m,d,h+mi/60,tz);return{main:r,known:true}}
+ const a=calc(y,m,d,0,tz),b=calc(y,m,d,23.983,tz),c=calc(y,m,d,12,tz);return{main:c,a,b,known:false}}
+
+let ME=null;
+function run(e){e&&e.preventDefault();
+ const dv=$("d").value;if(!dv){$("d").focus();return}
+ const tz=parseFloat($("tz").value),tv=$("t").value,r=parse(dv,tv,tz),m=r.main;
+ const pi=phaseIdx(m.el),P=PH[pi],S=SIGNS[signOf(m.s)],Mo=SIGNS[signOf(m.mo)];ME=pi;
+ drawMoon(m.el);
+ const [y,mo,da]=dv.split("-");
+ $("resTitle").textContent=`${+y}年${+mo}月${+da}日${tv?" "+tv:""}生まれの月`;
+ $("vPhase").textContent=P.i+" "+P.n;
+ $("dPhase").textContent=`${P.en}／太陽からの離角 ${m.el.toFixed(1)}°・輝面比 ${Math.round(m.ill*100)}%・月齢目安 ${m.age.toFixed(1)}`;
+ $("vSun").textContent=S.n;$("dSun").textContent=`${deg(m.s)}・${S.e}のエレメント`;
+ $("vMoon").textContent=Mo.n;$("dMoon").textContent=`${deg(m.mo)}・${Mo.e}のエレメント`;
+ const notes=[];
+ notes.push(`見た目の呼び名では「${appear(m.el)}」の日です。8分類の占星術的月相は離角45°ごとの区分なので、天文学上の呼び名と一致しないことがあります。`);
+ if(!r.known){
+  const pa=phaseIdx(r.a.el),pb=phaseIdx(r.b.el),ma=signOf(r.a.mo),mb=signOf(r.b.mo);
+  if(ma!==mb)notes.push(`この日は月が${SIGNS[ma].n}から${SIGNS[mb].n}へ移動します。出生時刻がわかると月星座が確定します（上の表示は正午時点）。`);
+  if(pa!==pb)notes.push(`この日は月相が${PH[pa].n}から${PH[pb].n}へ切り替わります。出生時刻がわかると確定します（上の表示は正午時点）。`);
+  if(signOf(r.a.s)!==signOf(r.b.s))notes.push(`この日は太陽が星座の境目にあります。出生時刻で太陽星座が変わります。`);
+ }else{
+  const near=l=>{const x=l%30;return x<.5||x>29.5};
+  if(near(m.mo))notes.push("月が星座の境界付近（±0.5°）にあります。隣の星座の性質も併せて読んでください。");
+  if(near(m.s))notes.push("太陽が星座の境界付近（±0.5°）にあります。");
+  const off=m.el%45;if(off<1||off>44)notes.push("月相の境界付近です。隣の月相の性質も帯びると読めます。");
+ }
+ $("notes").innerHTML=notes.map((t,i)=>`<p class="note${i>0?" warn":""}">${t}</p>`).join("");
+ $("essence").textContent=`${P.i}「${P.role}」役割を、☀️${S.n}らしく「${S.dir}」方向で発揮し、🌙${Mo.n}の月として「${Mo.need}」ときに心が満たされる人。`;
+ const nx=PH[(pi+1)%8],pv=PH[(pi+7)%8];
+ $("detail").innerHTML=[
+  ["向いている仕事・役割",`${P.work}。中でも${S.n}の太陽が加わると「${S.dir}」仕事で特に力が出やすくなります。`],
+  ["才能・強み",P.tal+"。"],
+  ["恋愛・人間関係",`${P.love}。月が${Mo.n}なので、関係の中で「${Mo.need}」ことが安心の条件になります。`],
+  ["太陽と月のバランス",elemRel(S.e,Mo.e)],
+  ["つまずきやすいところ",P.shadow+"。"],
+  ["次の一歩",`${P.step}。サイクルの流れでは、ひとつ前の${pv.i}${pv.n}の課題を受け取り、次の${nx.i}${nx.n}（「${nx.voice}」）へつなぐ位置にいます。`],
+  ["相性が活きやすい月相",P.cmp.map(k=>PH[k].i+PH[k].n).join("、")+"。前後の月相や補完する役割の人と組むと、ひとつの仕事を完成させやすくなります。"]
+ ].map(([h,t])=>`<div><h3>${h}</h3><p>${t}</p></div>`).join("");
+ $("res").classList.add("show");buildTable();
+ if(e)$("res").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});
+}
+function partner(e){e.preventDefault();if(ME===null)return;const dv=$("pd").value;if(!dv){$("pd").focus();return}
+ const r=parse(dv,$("pt").value,parseFloat($("tz").value)),q=phaseIdx(r.main.el),A=PH[ME],B=PH[q];
+ const diff=Math.min((q-ME+8)%8,(ME-q+8)%8);let rel;
+ if(diff===0)rel="同じ月相同士。価値観が似ていて分かり合いやすい反面、同じ弱点が重なりやすい組み合わせです。";
+ else if(diff===4)rel="満ち欠けの真向かい。視点が正反対なので刺激が大きく、互いに持っていないものを映し合う関係です。";
+ else if(diff===1)rel="隣り合う月相。サイクルの流れをそのまま受け渡せるので、仕事のバトンがつながりやすい関係です。";
+ else rel="異なる段階の役割を持つ組み合わせ。役割分担を意識すると補い合えます。";
+ const good=A.cmp.includes(q)||B.cmp.includes(ME);
+ $("pres").innerHTML=`<p class="note">あなた ${A.i}${A.n}（${A.voice}）× 相手 ${B.i}${B.n}（${B.voice}）<br>${rel}${good?"<br>一覧表でも「相性が活きやすい月相」に挙がる組み合わせです。":""}</p>`;
+}
+function buildTable(){
+ $("tbl").innerHTML=`<thead><tr><th>月相</th><th>離角</th><th>基本テーマ</th><th>向いている仕事・役割</th><th>才能・強み</th><th>恋愛傾向</th><th>相性が活きやすい月相</th></tr></thead><tbody>`+
+ PH.map((p,i)=>`<tr${i===ME?' class="me"':""}><td class="ph">${p.i} ${p.n}<small>${p.en}</small></td><td>${i*45}〜${i*45+45}°</td><td>${p.theme}</td><td>${p.work}</td><td>${p.tal}</td><td>${p.love}</td><td>${p.cmp.map(k=>PH[k].i+PH[k].n).join("、")}</td></tr>`).join("")+"</tbody>";
+}
+$("cycle").innerHTML=PH.map(p=>`<div><b>${p.i} ${p.n}</b><br>「${p.voice}」</div>`).join("");
+$("f").addEventListener("submit",run);$("pf").addEventListener("submit",partner);
+buildTable();run();
+</script>
+</body>
+</html>
